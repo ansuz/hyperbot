@@ -5,8 +5,8 @@ $.load=function(path){
   return fs.readFileSync(path,"utf8");
 };
 
-$.write=function(name,date){
-  fs.writeFileSync(name,data);
+$.write=function(name,data){
+  fs.writeFileSync(name,JSON.stringify(data));
 };
 
 $.countWordPairs=function(corpus){
