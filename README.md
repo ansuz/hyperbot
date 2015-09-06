@@ -1,35 +1,35 @@
-# Mimic your friends in three easy steps!
+# Hyperbot
 
-## grep your irssi logs
+## Getting started
 
-```Bash
-grep "< reptoidz>" ~/irclogs/hypeirc/* > reptoidz.txt
-```
+1. Get the source
+  + `git clone https://github.com/ansuz/hyperbot.git;cd hyperbot`
+2. install stuff
+  + `npm install`
+3. copy over the default config and edit it to suit your tastes
+  + `cp sample.config.agml config.agml`
+4. start it up!
+  + `node hyperbot.js`
 
-## process the resulting file into a json object
+## How the conf works
 
-```Bash
-node convert.js reptoidz.txt
-```
+As the extension suggests, this is [AGML](https://github.com/ansuz/agmljs). Each block is delimited by a starting and ending `---`, and can be used to define a new network.
 
-## Generate a phrase
+At present, the relevant variables are:
 
-```Bash
-node phrase.js ./reptoidz.txt.data.json "<reptoidz>"
-```
+* name
+  + a human readable name for the network to which your bot should connect
+* network
+  + the url of the network to which your bot should connect
+* nick
+  + the nick your bot will use on this network
+* prefix
+  + the prefix character that your bot should respond to on this network
+* channels
+  + the channels that your bot should attempt to join on this network
+* db
+  + the path to the leveldb database to use for this instance of the bot on this network
 
-In the above command, the first argument is the file you want to use. You need to prepend it with `./` because this is all a dirty hack.
+## What the bot does
 
-The second argument is the first token. I'm using `"<reptoidz>"` since all of the lines started with that token.
-
-## Example results
-
-```
-<reptoidz> i looked into enterprise level virtualization software
-<reptoidz> imagine richard stallman in a c++ function she would look
-<reptoidz> i want encryption options
-<reptoidz> one would be a pedo around 5pm eastern
-<reptoidz> that's a nazi
-<reptoidz> xface: ansuz: yeah they take their internet
-<reptoidz> damn data isnt working on a waitress
-```
+* ~mimic
