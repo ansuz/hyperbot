@@ -29,7 +29,12 @@ At present, the relevant variables are:
   + the channels that your bot should attempt to join on this network
 * db
   + the path to the leveldb database to use for this instance of the bot on this network
+* drop
+  + what characters should be dropped from the end of a nick
+* debug
+  + enable debugging in the irc module
 
 ## What the bot does
 
 * ~mimic
+* ~help
