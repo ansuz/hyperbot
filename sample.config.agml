@@ -1,0 +1,9 @@
+---
+name: hyperbot
+prefix: ~
+network: irc.hypeirc.net
+channels: #webdev
+debug: true
+db: ./yourDBName
+drop: _-
+---
