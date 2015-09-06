@@ -1,0 +1,32 @@
+{
+  "name": "hyperbot",
+  "version": "0.0.0",
+  "description": "markov chains + irc",
+  "main": "hyperbot.js",
+  "scripts": {
+    "test": "test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ansuz/hyperbot.git"
+  },
+  "keywords": [
+    "markov",
+    "hyperboria",
+    "bot",
+    "irc",
+    "pewpew"
+  ],
+  "author": "ansuz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ansuz/hyperbot/issues"
+  },
+  "homepage": "https://github.com/ansuz/hyperbot",
+  "dependencies": {
+    "agml": "^2.0.0",
+    "ansuz": "0.0.8",
+    "irc": "^0.3.12",
+    "level": "^1.3.0"
+  }
+}
