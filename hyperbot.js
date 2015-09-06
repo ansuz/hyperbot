@@ -124,6 +124,7 @@ function profileUser(db,opt){
             if(profiles.indexOf(prefix) == -1){
                 console.log("UPDATING PROFILES");
                 console.log(JSON.stringify(profiles));
+                profiles.push(prefix);
                 db.put('profiles',JSON.stringify(profiles),function(err){
                     if(err){
                         console.log("[ERROR]: we were unable to update the profile list for this server");
