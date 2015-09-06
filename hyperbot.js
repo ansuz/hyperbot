@@ -40,46 +40,36 @@ function makeBot(cfg,index){
     });
 
     // the mimic function
+    // message listeners here...
     bot.addListener('message', function(from,to,message){
         console.log({
             from:from,
             to:to,
             message:message,
         });
-        var mimic=new RegExp('^'+cfg.prefix+'mimic');
 
-        // TODO improve the message parsing
-        // you will probably want more than one command in the future
-        // if/else is a terrible model for that
+        // what does the bot need to listen for?
+        // ~mimic, ~help
 
-        var shouldMimic=false;
-        var remainder=message.replace(mimic,function(should){
-            console.log(should);
-            shouldMimic=true;return '';   
-        });
-
-        if(shouldMimic){
-            // check if they provided a nick of someone to mimic
-            var target;
-            remainder.replace(/\S+/,function(nick){
-                target=nick; return '';
-            });
-
-            // let's actually not check for now..
-    // nick, channel, seed
-            mimicUser(db,{
-                nick:target||from,
-                channel:to,
-                bot:bot,
-            });
-        }else{
-            // it's not a mimic command, so just keep track of what this particular user said
-            profileUser(db,{
-                nick:from,
-                channel: to,
-                message:message,
-                drop: cfg.drop||'',
-            });
+        var tokens=message.split(/\s+/);
+        switch(tokens[0]){
+            case '~mimic':
+                mimicUser(db,{
+                    nick:tokens[1]||from,
+                    channel:to,
+                    bot:bot,
+                });
+                break;
+            case '~help':
+                bot.say(to,"commands: ~mimic (name), ~help");
+                break;
+            default:
+                profileUser(db,{
+                    nick:from,
+                    channel: to,
+                    message:message,
+                    drop: cfg.drop||'',
+                });
         }
     });
 
