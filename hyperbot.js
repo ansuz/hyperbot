@@ -71,15 +71,22 @@ function makeBot(cfg,index){
         switch(tokens[0]){
             case '~mimic':
                 (function(){
-                    var len=Math.abs(tokens.length);
-                    for(var i=0;i<len;i++){
-//                        console.log(i);
-                        if(tokens[i+1]){
-                            mimicUser(db,{
-                                nick:tokens[i+1]||from,
-                                channel:to,
-                                bot:bot,
-                            });
+                    var len=tokens.length;
+                    if(tokens.length == 1){
+                        mimicUser(db,{
+                            nick:from,
+                            channel:to,
+                            bot:bot,
+                        });
+                    }else{
+                        for(var i=0;i<len;i++){
+                            if(tokens[i+1]){
+                                mimicUser(db,{
+                                    nick:tokens[i+1]||from,
+                                    channel:to,
+                                    bot:bot,
+                                });
+                            }
                         }
                     }
                 }());
