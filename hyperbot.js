@@ -7,15 +7,31 @@ var fs=require("fs");
 
 // command line arguments
 var args=process.argv.slice(2);
-var configPath=args[0]||'./config.agml';
 
-// where you'll put configuration
-var config=[];
+if(require.main === module){
+    var configPath=args[0]||'./config.agml';
 
-// load and parse configuration variables
-agml.parse(fs.readFileSync(configPath,'utf-8'),config);
+    // where you'll put configuration
+    var config=[];
 
-var bots=config.map(makeBot);
+    // load and parse configuration variables
+    agml.parse(fs.readFileSync(configPath,'utf-8'),config);
+
+    var bots=config.map(makeBot);
+}else{
+    module.exports={
+        makeDb:makeDb,
+        makeBot:makeBot,
+        mimicUser:mimicUser,
+        profileUser:profileUser,
+        increment:increment,
+        chooseWeighted:chooseWeighted,
+    };
+}
+
+function makeDb(path){
+    return level(path);
+};
 
 function makeBot(cfg,index){
     console.log("setting up %sth network",index);
@@ -92,7 +108,7 @@ function profileUser(db,opt){
     // unpack your vars to make things easy and be non-destructive
     // TODO optimize out the copied variables later
     var drop=opt.drop?new RegExp('['+opt.drop+']+$'):/^$/,
-        nick=opt.nick.replace(drop,''),
+        nick=opt.nick.replace(drop,'').replace(/^[@_]+/,''),
         channel=opt.channel, 
         message=opt.message;
 
@@ -118,10 +134,10 @@ function profileUser(db,opt){
             });
         }else{
             var profiles=(typeof value == 'string')?JSON.parse(value):value;
-            console.log(profiles);
+//            console.log(profiles);
             if(profiles.indexOf(prefix) == -1){
-                console.log("UPDATING PROFILES");
-                console.log(JSON.stringify(profiles));
+//                console.log("UPDATING PROFILES");
+//                console.log(JSON.stringify(profiles));
                 profiles.push(prefix);
                 db.put('profiles',JSON.stringify(profiles),function(err){
                     if(err){
@@ -159,7 +175,7 @@ function profileUser(db,opt){
             var key=prefix+'::'+[first,second].join('->');
 
             // function increment(opt){ // db, key, value, noExist, failure, success
-            console.log(key);
+//            console.log(key);
             increment({
                 db:db,
                 key:key,
