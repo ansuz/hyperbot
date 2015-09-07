@@ -54,14 +54,22 @@ function makeBot(cfg,index){
         var tokens=message.split(/\s+/);
         switch(tokens[0]){
             case '~mimic':
-                mimicUser(db,{
-                    nick:tokens[1]||from,
-                    channel:to,
-                    bot:bot,
-                });
+                (function(){
+                    var len=Math.abs(tokens.length);
+                    for(var i=0;i<len;i++){
+//                        console.log(i);
+                        if(tokens[i+1]){
+                            mimicUser(db,{
+                                nick:tokens[i+1]||from,
+                                channel:to,
+                                bot:bot,
+                            });
+                        }
+                    }
+                }());
                 break;
             case '~help':
-                bot.say(to,"commands: ~mimic (name), ~help");
+                bot.say(to,"commands: (~mimic (name), (...),(names)), ~help");
                 break;
             default:
                 profileUser(db,{
