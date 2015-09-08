@@ -215,7 +215,8 @@ function mimicUser(db,opt){
     };
 
     function onceDone(){
-        opt.bot.say(opt.channel, runningData.phrase.join(" "));
+        ((opt.callback||(function(input){opt.bot.say(opt.channel, input)}))
+            (runningData.phrase.join(" ")));
     };
 
     function nextWord(){
@@ -255,7 +256,7 @@ function mimicUser(db,opt){
     }else{
         // choose a random seed
         db.get(prefix+"seeds",function(err,value){
-            console.log(prefix+"seeds");
+//            console.log(prefix+"seeds");
             if(err){
                 // there are no known seeds, so there's nothing you can do
                 opt.bot.say(opt.channel,"I'm not sure who you want me to mimic");
