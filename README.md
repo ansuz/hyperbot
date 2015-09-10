@@ -33,6 +33,11 @@ At present, the relevant variables are:
   + what characters should be dropped from the end of a nick
 * debug
   + enable debugging in the irc module
+* floodProtection
+  + keep your bot from flooding the channel
+  + set to true to enable
+* floodProtectionDelay
+  + flood delay, default 1000
 
 ## What the bot does
 
