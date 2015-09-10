@@ -181,13 +181,14 @@ function makeBot(cfg,index){
                 }());
                 break;
             case '~help':
-                bot.say(to,"commands: (~mimic (name), (...),(names)), ~help, ~slap");
+                bot.say(to,"commands: (~mimic (name), (...),(names)), ~help, ~slap, ~feds");
                 break;
             case '~feds':
                 fed(db,{
                     channel:to,
                     bot:bot,
                     names:names&&names[to]||{},
+                    drop:cfg&&cfg.drop,
                 });
                 break;
             case '~slap':
@@ -245,7 +246,10 @@ function fed(db,opt){
         })
         // strip the channel portion of the profile
         .map(function(profile){
-            return profile.replace(/#\S+$/,'').replace(/[+@]/g,'');
+            return stripBad({
+                drop:opt.drop,
+                nick:profile,
+            });
         });
         console.log(inChannel);
        
