@@ -6,4 +6,6 @@ channels: #webdev
 debug: true
 db: ./yourDBName
 drop: _-
+floodProtection: true
+floodProtectionDelay: 1000
 ---
