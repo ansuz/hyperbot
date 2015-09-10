@@ -54,6 +54,8 @@ function makeBot(cfg,index){
         console.log(err);
     }
 
+    var ignorelist=(cfg.ignore||"").split(/\s+/);
+
     bot.addListener('error',function(message){
         console.error('ERROR: %s: %s', message);
     });
@@ -177,6 +179,7 @@ function makeBot(cfg,index){
                 bot:opt.bot,
                 names:opt.names[opt.to]||{},
                 drop:opt.drop,
+                ignore:opt.ignore,
             });
         },
         help:function(opt){
@@ -196,6 +199,7 @@ function makeBot(cfg,index){
                 channel:    opt.to,
                 message:    opt.message,
                 drop:       opt.drop||'',
+                ignore:     ignorelist, // is this actually necessary?
             });
         },
     };
@@ -221,6 +225,7 @@ function makeBot(cfg,index){
             names:names,
             bot:bot,
             prefix:cfg.prefix,
+            ignore:ignorelist,
         };
 //        console.log(opt);
         (registered[tokens[0]]||commands.default)(opt);
@@ -255,10 +260,11 @@ function join(opt){
 
 function fed(db,opt){
     // channel, bot,names 
-    if(!(opt.channel && opt.names && opt.drop )){
+    if(!(opt.channel && opt.names && opt.drop)){
         console.log("Not enough arguments provided to 'fed'");
         return;
     }
+    console.log("ignoring %s",opt.ignore);
     db.get('profiles', function(err,value){
         var profiles=JSON.parse(value);
         // get a list of profiles that have been active in this channel
@@ -277,7 +283,7 @@ function fed(db,opt){
         // get a list of users that are currently in the channel and
         // determine users for whom you have no data
         var feds=Object.keys(opt.names).filter(function(name){
-            return inChannel.indexOf(name) === -1;
+            return (inChannel.indexOf(name) === -1) && opt.ignore.indexOf(name);
         });
 
         // announce to the channel that those users are most likely feds
