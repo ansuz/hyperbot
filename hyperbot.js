@@ -78,6 +78,8 @@ function makeBot(cfg,index){
         names[channel][nick]="";
 
         // log user, host, and nick info
+        // bidirectional relationships:
+          // user <-> host
     });
 
     bot.addListener('part',function(channel,nick,reason,message){
@@ -90,7 +92,7 @@ function makeBot(cfg,index){
 
     bot.addListener('quit', function(nick,reason,channel,message){
         // remove the nick from names
-        console.log("[QUIT] \nchannel:%s;\nnick%s;\nmessage%s;\nreason%s", channel,nick,message,reason);
+        console.log("[QUIT] \nchannel:%s;\nnick%s;\nmessage%s;\nreason%s", channel,nick,typeof message=='object'?JSON.stringify(message):message,reason);
         if(names&&names[channel]&&names[channel][nick]){
             delete names[channel][nick];
         }
@@ -233,7 +235,8 @@ function join(opt){
 
 function fed(db,opt){
     // channel, bot,names 
-    if(!opt.channel){
+    if(!(opt.channel && opt.names && opt.drop )){
+        console.log("Not enough arguments provided to 'fed'");
         return;
     }
     db.get('profiles', function(err,value){
@@ -252,7 +255,7 @@ function fed(db,opt){
             });
         });
         console.log(inChannel);
-       
+
         // get a list of users that are currently in the channel
         var present=Object.keys(opt.names);
 
