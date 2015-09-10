@@ -98,9 +98,9 @@ function makeBot(cfg,index){
         }
     });
 
-    bot.addListener('kick', function(nick,by,reason,message){
+    bot.addListener('kick', function(channel,nick,by,message){
         // remove the nick from names
-        console.log("[KICK]\nnick:%s;\nby:%s;\nreason:%s;\nmessage:%s\n",nick,by,reason,message);
+        console.log("[KICK]\nnick:%s;\nby:%s;\nchannel:%s;\nmessage:%s\n",nick,by,channel,message);
         if(names&&names[channel]&&names[channel][nick]){
             delete names[channel][nick];
         }
