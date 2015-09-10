@@ -23,6 +23,7 @@ if(require.main === module){
         makeDb:makeDb,
         makeBot:makeBot,
         mimicUser:mimicUser,
+        fed:fed,
         profileUser:profileUser,
         increment:increment,
         chooseWeighted:chooseWeighted,
@@ -45,6 +46,8 @@ function makeBot(cfg,index){
         bot=new irc.Client(cfg.network,cfg.nick,{
             debug:cfg.debug||false,
             channels: cfg.channels.split(','),
+            floodProtection: cfg.floodProtection=='true',
+            floodProtectionDelay: cfg.floodProtection=='true'?parseInt(cfg.floodProtectionDelay||'1000'):undefined,
         });
         db=level(cfg.db);
     }catch(err){
@@ -52,11 +55,91 @@ function makeBot(cfg,index){
     }
 
     bot.addListener('error',function(message){
-        console.error('ERROR: %s: %s', message.command, message.args.join(""));
+        console.error('ERROR: %s: %s', message);
     });
 
-    // the mimic function
-    // message listeners here...
+    var names={};
+    bot.addListener('names',function(channel,nicks){
+        // track who's in the room
+        console.log("In channel %s:",channel);
+        console.log("Found the users %s",typeof nicks == 'object'?JSON.stringify(nicks):nick);
+        names[channel]=names[channel]||{};
+
+        Object.keys(nicks).forEach(function(nick){
+            names[channel][nick]=nicks[nick];
+        });
+    });
+
+    bot.addListener('join',function(channel,nick,message){
+        // add the nick to names
+        console.log("[JOIN] %s :: %s; %s", channel,nick,JSON.stringify(message));
+        names[channel]=names[channel]||{};
+
+        names[channel][nick]="";
+
+        // log user, host, and nick info
+    });
+
+    bot.addListener('part',function(channel,nick,reason,message){
+        // remove the nick from names
+        console.log("[PART] %s :: %s; %s; %s", channel,nick,message,reason);
+        if(names&&names[channel]&&names[channel][nick]){
+            delete names[channel][nick];
+        }
+    });
+
+    bot.addListener('quit', function(nick,reason,channel,message){
+        // remove the nick from names
+        console.log("[QUIT] \nchannel:%s;\nnick%s;\nmessage%s;\nreason%s", channel,nick,message,reason);
+        if(names&&names[channel]&&names[channel][nick]){
+            delete names[channel][nick];
+        }
+    });
+
+    bot.addListener('kick', function(nick,by,reason,message){
+        // remove the nick from names
+        console.log("[KICK]\nnick:%s;\nby:%s;\nreason:%s;\nmessage:%s\n",nick,by,reason,message);
+        if(names&&names[channel]&&names[channel][nick]){
+            delete names[channel][nick];
+        }
+    });
+
+/*
+    bot.addListener('nick',function(oldnick,newnick,channels,message){
+        // remove old nick, add new nick
+        console.log("[nick] %s changed to %s in [%s] with message '%s'",oldnick,newnick,channels.join(', '),message)
+        if(names&&names[channel]&&names[channel][oldnick]){
+            delete names[channel][oldnick];
+        }
+        names[channel]=names[channel]||{};
+        names[channel][newnick]="";
+    });
+*/
+
+/////////////////////////////////////////////////////////////////////
+
+    bot.addListener('topic',function(channel,topic,nick,message){
+
+    });
+
+    bot.addListener('pm',function(from,to,text,type,message){
+
+    });
+
+    bot.addListener('-mode',function(channel,by,mode,argument,message){
+
+    });
+
+    bot.addListener('-mode',function(channel,by,mode,argument,message){
+
+    });
+
+
+    bot.addListener('action',function(from,to,text,message){
+        
+    });
+
+    // consider making this message# so as to exclude PMs
     bot.addListener('message', function(from,to,message){
         console.log({
             from:from,
@@ -65,7 +148,7 @@ function makeBot(cfg,index){
         });
 
         // what does the bot need to listen for?
-        // ~mimic, ~help
+        // ~mimic, ~help, ~slap
 
         var tokens=message.split(/\s+/);
         switch(tokens[0]){
@@ -74,7 +157,10 @@ function makeBot(cfg,index){
                     var len=tokens.length;
                     if(tokens.length == 1){
                         mimicUser(db,{
-                            nick:from,
+                            nick:stripBad({
+                                nick:tokens[i+1]||from,
+                                drop:opt.drop,
+                            }),
                             channel:to,
                             bot:bot,
                         });
@@ -82,7 +168,10 @@ function makeBot(cfg,index){
                         for(var i=0;i<len;i++){
                             if(tokens[i+1]){
                                 mimicUser(db,{
-                                    nick:tokens[i+1]||from,
+                                    nick:stripBad({
+                                        nick:tokens[i+1]||from,
+                                        drop:cfg.drop,
+                                    }),
                                     channel:to,
                                     bot:bot,
                                 });
@@ -92,7 +181,17 @@ function makeBot(cfg,index){
                 }());
                 break;
             case '~help':
-                bot.say(to,"commands: (~mimic (name), (...),(names)), ~help");
+                bot.say(to,"commands: (~mimic (name), (...),(names)), ~help, ~slap");
+                break;
+            case '~feds':
+                fed(db,{
+                    channel:to,
+                    bot:bot,
+                    names:names&&names[to]||{},
+                });
+                break;
+            case '~slap':
+                bot.action(to,"slaps "+from);
                 break;
             default:
                 profileUser(db,{
@@ -111,11 +210,67 @@ function makeBot(cfg,index){
     };
 };
 
+function stripBad(opt){
+    var drop=opt.drop?new RegExp('['+opt.drop+']+$'):/^$/,
+        nick=opt.nick.replace(drop,'').replace(/^[@_\-+]+/,'');
+        return nick;
+};
+
+
+function send(client,command,arg1,arg2,arg3){
+    client.send(command,arg1,arg2,arg3);
+};
+
+function op(opt){
+    // channel, nick(s);
+    opt.bot.send('MODE', opt.channel, '+o', opt.nick);
+};
+
+function join(opt){
+
+};
+
+function fed(db,opt){
+    // channel, bot,names 
+    if(!opt.channel){
+        return;
+    }
+    db.get('profiles', function(err,value){
+        var profiles=JSON.parse(value);
+//        console.log(profiles);
+        // get a list of profiles that have been active in this channel
+        var inChannel=profiles
+        .filter(function(profile){
+            return new RegExp(opt.channel+'$').test(profile);
+        })
+        // strip the channel portion of the profile
+        .map(function(profile){
+            return profile.replace(/#\S+$/,'').replace(/[+@]/g,'');
+        });
+        console.log(inChannel);
+       
+        // get a list of users that are currently in the channel
+        var present=Object.keys(opt.names);
+
+        // determine users for whom you have no data
+        var feds=present.filter(function(name){
+            return inChannel.indexOf(name) === -1;
+        });
+
+        // announce to the channel that those users are most likely feds
+        if(feds.length){
+            opt.bot.say(opt.channel,"The following users are probably feds: ["+feds.join(", ")+"]");
+        }else{
+            opt.bot.say(opt.channel,"I'm not sure which users in this channel, if any, are feds. Nevertheless, remain vigilant!");
+        }
+    });
+};
+
 function profileUser(db,opt){
     // unpack your vars to make things easy and be non-destructive
     // TODO optimize out the copied variables later
     var drop=opt.drop?new RegExp('['+opt.drop+']+$'):/^$/,
-        nick=opt.nick.replace(drop,'').replace(/^[@_]+/,''),
+        nick=opt.nick.replace(drop,'').replace(/^[@_\-+]+/,''),
         channel=opt.channel, 
         message=opt.message;
 
@@ -259,7 +414,7 @@ function mimicUser(db,opt){
 //            console.log(prefix+"seeds");
             if(err){
                 // there are no known seeds, so there's nothing you can do
-                opt.bot.say(opt.channel,"I'm not sure who you want me to mimic");
+                opt.bot.say(opt.channel,"I'm not familiar with "+opt.nick);
             }else{
                 // you have some seeds
                 var seeds=JSON.parse(value);
