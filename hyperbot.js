@@ -141,69 +141,89 @@ function makeBot(cfg,index){
         
     });
 
+    // what does the bot need to listen for?
+    var registered={};
+
+    var commands={
+        mimic:function(opt){
+            var len=opt.tokens.length;
+            if(opt.tokens.length == 1){
+                mimicUser(opt.db,{
+                    nick:stripBad({
+                        nick:opt.tokens[i+1]||opt.from,
+                        drop:opt.drop,
+                    }),
+                    channel:opt.to,
+                    bot:opt.bot,
+                });
+            }else{
+                for(var i=0;i<len;i++){
+                    if(opt.tokens[i+1]){
+                        mimicUser(opt.db,{
+                            nick:stripBad({
+                                nick:opt.tokens[i+1]||opt.from,
+                                drop:opt.drop,
+                            }),
+                            channel:opt.to,
+                            bot:opt.bot,
+                        });
+                    }
+                }
+            }
+        },
+        feds:function(opt){
+            fed(db,{
+                channel:opt.to,
+                bot:opt.bot,
+                names:opt.names[opt.to]||{},
+                drop:opt.drop,
+            });
+        },
+        help:function(opt){
+            // TODO load a docstring out of the first comment in the function
+            // hint, use ansuzjs
+            var helpline=Object.keys(registered).slice(0,-1).map(function(cmd){
+                return '"'+cmd+'"';
+            }).join(', ');
+            bot.say(opt.to,opt.from+': try one of ['+helpline+']');
+        },
+        slap:function(opt){
+            bot.action(opt.to,"slaps "+opt.from);
+        },
+        default:function(opt){
+            profileUser(opt.db,{
+                nick:       opt.from,
+                channel:    opt.to,
+                message:    opt.message,
+                drop:       opt.drop||'',
+            });
+        },
+    };
+
+    Object.keys(commands).forEach(function(command){
+        // TODO do the following only if the command exists in a list
+        // of registered plugins on a per-network basis
+
+        // register the command with the appropriate prefix
+        registered[cfg.prefix+command]=commands[command];
+    });
+
     // consider making this message# so as to exclude PMs
     bot.addListener('message', function(from,to,message){
-        console.log({
+        var tokens=message.split(/\s+/);
+        var opt={
+            db:db,
             from:from,
             to:to,
             message:message,
-        });
-
-        // what does the bot need to listen for?
-        // ~mimic, ~help, ~slap
-
-        var tokens=message.split(/\s+/);
-        switch(tokens[0]){
-            case '~mimic':
-                (function(){
-                    var len=tokens.length;
-                    if(tokens.length == 1){
-                        mimicUser(db,{
-                            nick:stripBad({
-                                nick:tokens[i+1]||from,
-                                drop:opt.drop,
-                            }),
-                            channel:to,
-                            bot:bot,
-                        });
-                    }else{
-                        for(var i=0;i<len;i++){
-                            if(tokens[i+1]){
-                                mimicUser(db,{
-                                    nick:stripBad({
-                                        nick:tokens[i+1]||from,
-                                        drop:cfg.drop,
-                                    }),
-                                    channel:to,
-                                    bot:bot,
-                                });
-                            }
-                        }
-                    }
-                }());
-                break;
-            case '~help':
-                bot.say(to,"commands: (~mimic (name), (...),(names)), ~help, ~slap, ~feds");
-                break;
-            case '~feds':
-                fed(db,{
-                    channel:to,
-                    bot:bot,
-                    names:names&&names[to]||{},
-                    drop:cfg&&cfg.drop,
-                });
-                break;
-            case '~slap':
-                bot.action(to,"slaps "+from);
-                break;
-            default:
-                profileUser(db,{
-                    nick:from,
-                    channel: to,
-                    message:message,
-                    drop: cfg.drop||'',
-                });
-        }
+            tokens:tokens,
+            drop:cfg.drop,
+            names:names,
+            bot:bot,
+            prefix:cfg.prefix,
+        };
+//        console.log(opt);
+        (registered[tokens[0]]||commands.default)(opt);
     });
 
     return {
@@ -241,7 +261,6 @@ function fed(db,opt){
     }
     db.get('profiles', function(err,value){
         var profiles=JSON.parse(value);
-//        console.log(profiles);
         // get a list of profiles that have been active in this channel
         var inChannel=profiles
         .filter(function(profile){
@@ -251,16 +270,13 @@ function fed(db,opt){
         .map(function(profile){
             return stripBad({
                 drop:opt.drop,
-                nick:profile,
+                nick:profile.replace(/#.+/,''),
             });
         });
-        console.log(inChannel);
 
-        // get a list of users that are currently in the channel
-        var present=Object.keys(opt.names);
-
+        // get a list of users that are currently in the channel and
         // determine users for whom you have no data
-        var feds=present.filter(function(name){
+        var feds=Object.keys(opt.names).filter(function(name){
             return inChannel.indexOf(name) === -1;
         });
 
@@ -344,7 +360,6 @@ function profileUser(db,opt){
             var key=prefix+'::'+[first,second].join('->');
 
             // function increment(opt){ // db, key, value, noExist, failure, success
-//            console.log(key);
             increment({
                 db:db,
                 key:key,
