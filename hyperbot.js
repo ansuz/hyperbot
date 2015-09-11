@@ -286,7 +286,7 @@ function fed(db,opt){
             // they have never talked, and..
             return (inChannel.indexOf(name) === -1) && 
                 // their name is NOT in the ignore list 
-                (opt.ignore.indexOf(name) !== -1);
+                (opt.ignore.indexOf(name) == -1);
         });
 
         // announce to the channel that those users are most likely feds
