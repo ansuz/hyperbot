@@ -199,18 +199,25 @@ function makeBot(cfg,index){
                 channel:    opt.to,
                 message:    opt.message,
                 drop:       opt.drop||'',
-                ignore:     ignorelist, // is this actually necessary?
+                ignore:     ignorelist,
             });
         },
     };
 
-    Object.keys(commands).forEach(function(command){
-        // TODO do the following only if the command exists in a list
-        // of registered plugins on a per-network basis
-
-        // register the command with the appropriate prefix
-        registered[cfg.prefix+command]=commands[command];
-    });
+    if(cfg.plugins){
+        cfg.plugins
+            .split(",")
+            .map(function(plugin){
+                return plugin.trim();
+            })
+            .forEach(function(command){
+                // check if that command exists before trying to load it
+                if(commands[command]){
+                    // register the command with the appropriate prefix
+                    registered[cfg.prefix+command]=commands[command];
+                }
+            });
+    }
 
     // consider making this message# so as to exclude PMs
     bot.addListener('message', function(from,to,message){
