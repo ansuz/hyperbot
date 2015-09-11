@@ -38,6 +38,14 @@ At present, the relevant variables are:
   + set to true to enable
 * floodProtectionDelay
   + flood delay, default 1000
+* ignore
+  + for users you want to ignore for the purposes of the 'feds' command, and potentially other commands in the future
+  + separate users with commas
+* plugins
+  + list out the names of the plugins you want to load on a per-network basis
+  + separate plugins with commas
+  + at this point, valid plugins include:
+    - mimic, help, feds, slap
 
 ## What the bot does
 
