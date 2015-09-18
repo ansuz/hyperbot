@@ -191,6 +191,7 @@ function makeBot(cfg,index){
             bot.say(opt.to,opt.from+': try one of ['+helpline+']');
         },
         slap:function(opt){
+            bot.say(opt.to, "DON'T TELL ME WHAT TO DO!")
             bot.action(opt.to,"slaps "+opt.from);
         },
         default:function(opt){
